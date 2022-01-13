@@ -17,7 +17,7 @@ class TestVocabAnalyzer():
                 "unique_words": 0,
                 "words_per_doc": 0,
                 "most_common": [],
-                "rare_words": [],
+                "rare_words": 0,
             }),
             ([
                 ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "in", "forest"],
@@ -38,7 +38,7 @@ class TestVocabAnalyzer():
                 "unique_words": 12,
                 "words_per_doc": 67 / 12,
                 "most_common": [("forest", 11), ("in", 10), ("dog", 9), ("lazy", 8), ("over", 7), ("jumps", 6), ("fox", 5), ("brown", 4), ("quick", 3), ("the", 2)],
-                "rare_words": ["rare", "words"],
+                "rare_words": 2,
             }),
         ]
     )

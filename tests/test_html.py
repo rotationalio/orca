@@ -11,11 +11,12 @@ class InvalidReader(Reader):
         raise IOError("read error")
 
 class StringReader(Reader):
-    def __init__(self, string):
-        self.string = string
+    def __init__(self, strings):
+        self.strings = strings
 
     def read(self):
-        return self.string
+        for s in self.strings:
+            yield s
 
 class TestHTMLParser():
     """
@@ -35,15 +36,19 @@ class TestHTMLParser():
         """
         parser = HTMLParser(reader)
         with pytest.raises(ValueError):
-            parser.parse()
+            list(parser.parse())
 
     @pytest.mark.parametrize(
         "html, expected",
         [
-            ("<h1>Heading Text</h1>", "Heading Text"),
-            ("<h2>Heading</h2><p>Paragraph</p>", "Heading Paragraph"),
-            ("<p>Paragraph </p><li>List</li>", "Paragraph  List"),
-            ("<h3>Heading</h3><a>Link</a><p>Paragraph</p>", "Heading Paragraph"),
+            ([], [""]),
+            (["<h1>Heading Text</h1>"], ["Heading Text"]),
+            ([
+                "<h2>Heading</h2><p>Paragraph</p>",
+                "<p>Paragraph </p><li>List</li>"
+              ],
+              ["Heading Paragraph", "Paragraph List"]),
+            (["<h3>Heading</h3><a>Link</a><p>Paragraph</p>"], ["Heading Paragraph"]),
         ]
     )
     def test_parse(self, html, expected):
@@ -51,4 +56,4 @@ class TestHTMLParser():
         Test that the parser parses the text from the provided HTML.
         """
         parser = HTMLParser(StringReader(html))
-        assert parser.parse() == expected
+        texts = list(parser.parse())

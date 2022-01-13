@@ -3,6 +3,7 @@ from src.corpus import OnlineTextCorpus
 import os
 import pytest
 from gensim.corpora import Dictionary
+from gensim.corpora import MmCorpus
 
 class TestOnlineTextCorpus():
     """
@@ -21,45 +22,6 @@ class TestOnlineTextCorpus():
         with pytest.raises(ValueError):
             corpus = OnlineTextCorpus(tmpdir, num_checkpoints=num_checkpoints)
 
-    def test_save_invalid(self, tmpdir):
-        """
-        Test that save() raises an exception when the corpus is empty.
-        """
-        corpus = OnlineTextCorpus(tmpdir)
-        corpus.dictionary = Dictionary()
-        with pytest.raises(ValueError):
-            corpus.save()
-
-    @pytest.mark.parametrize(
-        "num_checkpoints",
-        [1, 2, 5]
-    )
-    def test_save(self, tmpdir, num_checkpoints):
-        """
-        Test that save() saves the corpus to disk.
-        """
-        corpus = OnlineTextCorpus(tmpdir, num_checkpoints=num_checkpoints)
-        corpus.version = 1
-        corpus.dictionary = Dictionary([["hello", "world"]])
-        corpus.save()
-        corpus_path = os.path.join(tmpdir, "corpus_1")
-        assert os.path.isdir(corpus_path)
-        dict_path = os.path.join(corpus_path, "dict")
-        assert os.path.isfile(dict_path)
-
-        # Save a few more times to trigger version cleanup.
-        for i in range(num_checkpoints):
-            corpus.version += 1
-            corpus.save()
-        
-        # Check that the older versions of the corpus have been removed.
-        dirs = os.listdir(tmpdir)
-        assert len(dirs) == num_checkpoints
-        for d in dirs:
-            assert d.startswith("corpus_")
-            assert int(d.split("_")[1]) <= corpus.version
-            assert os.path.isfile(os.path.join(tmpdir, d, "dict"))
-
     @pytest.mark.parametrize(
         "num_checkpoints",
         [1, 2, 5]
@@ -75,6 +37,8 @@ class TestOnlineTextCorpus():
             os.mkdir(corpus_path)
             dictionary.add_documents([[version]])
             dictionary.save(os.path.join(corpus_path, "dict"))
+            mm_path = os.path.join(corpus_path, "corpus.mm")
+            MmCorpus.serialize(mm_path, [dictionary.doc2bow([version])])
         
         corpus = OnlineTextCorpus(tmpdir, num_checkpoints=num_checkpoints)
 
@@ -104,7 +68,37 @@ class TestOnlineTextCorpus():
         """
         corpus = OnlineTextCorpus(tmpdir)
         corpus.add_documents([["hello", "world"]])
+        assert corpus.version == 1
+        assert corpus.dictionary.num_docs == 1
+        assert len(list(corpus.mm)) == 1
+
         corpus.add_documents(documents)
         assert corpus.version == 2
         assert corpus.dictionary.num_docs == len(documents) + 1
         assert len(corpus.dictionary.token2id) == expected_words
+        assert len(list(corpus.mm)) == len(documents) + 1
+
+    @pytest.mark.parametrize(
+        "initial, additional, expected_words",
+        [
+            ([], [], []),
+            ([], [["hello", "world"]], [2]),
+            ([["the", "quick", "brown", "fox"],
+              ["jumped", "over", "the", "lazy", "dog"]], [], [4, 5]),
+            ([["the", "quick", "brown"]], [["fox"], ["jumped"]], [3, 1, 1]),
+        ]
+    )
+    def test_iter_corpus(self, tmpdir, initial, additional, expected_words):
+        """
+        Test that iter_corpus() returns a generator that yields the documents in
+        the corpus.
+        """
+        corpus = OnlineTextCorpus(tmpdir)
+        corpus.add_documents(initial)
+
+        # Iterate over the corpus and ensure that the documents are yielded in
+        # the correct order.
+        counts = []
+        for document in corpus.iter_corpus(documents=additional):
+            counts.append(len(document))
+        assert counts == expected_words
