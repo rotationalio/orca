@@ -1,5 +1,3 @@
-from src.corpus import OnlineTextCorpus
-
 from collections import Counter
 from gensim.corpora import Dictionary
 
@@ -10,7 +8,7 @@ class VocabAnalyzer():
 
     def __init__(self, dictionary):
         if not isinstance(dictionary, Dictionary):
-            raise ValueError("corpus must be a gensim Dictionary.")
+            raise ValueError("dictionary must be a gensim Dictionary.")
         self.dictionary = dictionary
 
     def corpus_statistics(self):
@@ -34,7 +32,7 @@ class VocabAnalyzer():
             word_freq[token] = self.dictionary.cfs[id]
 
         stats["most_common"] = word_freq.most_common(10)
-        stats["rare_words"] = rare_tokens
+        stats["rare_words"] = len(rare_tokens)
         return stats
 
     def word_statistics(self, word):

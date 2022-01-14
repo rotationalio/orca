@@ -14,19 +14,21 @@ class HTMLParser():
 
     def parse(self):
         """
-        Parse the next HTML file from the reader and return the entire text.
+        Return a generator that parses text content from the reader.
         """
-        try:
-            html = self.reader.read()
+        try: 
+            for html in self.reader.read():
+                if html is None:
+                    return
+                yield self._parse_text(html)
         except Exception as e:
             raise ValueError("Error retrieving file from reader: " + str(e))
-        if html is None:
-            return None
-        return self._parse_text(html)
 
     def _parse_text(self, html):
         """
         Parse the text from the provided HTML.
+        TODO: We can be smarter about which text content to return (e.g., for news
+        articles, the most information-rich content is near the top of the article).
         """
         soup = BeautifulSoup(html, 'html.parser')
         text = ""
