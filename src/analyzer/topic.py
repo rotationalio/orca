@@ -12,14 +12,13 @@ class TopicAnalyzer():
         self.max_topics = max_topics
         self.models = {}
 
-    def fit_lda(self, dictionary, corpus, **kwargs):
+    def _fit_models(self, model_class, dictionary, corpus, **kwargs):
         """
-        Fits several LDA models on the given dictionary and corpus with the given set of
-        parameters.
+        Fits several models of the given type on the given dictionary and corpus with the given set of parameters.
         """
         for num_topics in range(self.min_topics, self.max_topics + 1):
-            print("fitting LDA model with {} topics".format(num_topics))
-            model = LdaModel(corpus=corpus, id2word=dictionary, num_topics=num_topics, **kwargs)
+            print("fitting {} model with {} topics".format(model_class.__name__, num_topics))
+            model = model_class(corpus=corpus, id2word=dictionary, num_topics=num_topics, **kwargs)
             cm = CoherenceModel(model=model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
             results = {}
             results['coherence'] = cm.get_coherence()
@@ -27,23 +26,21 @@ class TopicAnalyzer():
             self.models[num_topics] = {}
             self.models[num_topics]['model'] = model
             self.models[num_topics]['results'] = results
+
+    def fit_lda(self, dictionary, corpus, **kwargs):
+        """
+        Fits several LDA models on the given dictionary and corpus with the given set of
+        parameters.
+        """
+        self._fit_models(LdaModel, dictionary, corpus, **kwargs)
         
     def fit_nmf(self, dictionary, corpus, **kwargs):
         """
         Fits several NMF models on the given dictionary and corpus with the given set of
         parameters.
         """
-        for num_topics in range(self.min_topics, self.max_topics + 1):
-            print("fitting NMF model with {} topics".format(num_topics))
-            tfidf = TfidfModel(dictionary=dictionary)
-            model = Nmf(tfidf[corpus], id2word=dictionary, num_topics=num_topics, **kwargs)
-            cm = CoherenceModel(model=model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
-            results = {}
-            results['coherence'] = cm.get_coherence()
-            print("coherence: {}".format(results['coherence']))
-            self.models[num_topics] = {}
-            self.models[num_topics]['model'] = model
-            self.models[num_topics]['results'] = results
+        tfidf = TfidfModel(dictionary=dictionary)
+        self._fit_models(Nmf, dictionary, tfidf[corpus], **kwargs)
 
     def update(self, documents):
         """
