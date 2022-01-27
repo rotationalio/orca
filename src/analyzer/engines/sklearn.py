@@ -1,7 +1,5 @@
 from src.analyzer.engines.engine import ModelingEngine
 
-import pandas as pd
-
 from sklearn.model_selection import GridSearchCV
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition import NMF
