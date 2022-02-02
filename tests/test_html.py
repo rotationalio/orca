@@ -57,3 +57,4 @@ class TestHTMLParser():
         """
         parser = HTMLParser(StringReader(html))
         texts = list(parser.parse())
+        assert texts == expected

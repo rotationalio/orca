@@ -16,13 +16,13 @@ class HTMLParser():
         """
         Return a generator that parses text content from the reader.
         """
-        try: 
-            for html in self.reader.read():
+        for html in self.reader.read():
+            try:
                 if html is None:
                     return
                 yield self._parse_text(html)
-        except Exception as e:
-            raise ValueError("Error retrieving file from reader: " + str(e))
+            except Exception as e:
+                print("Error parsing HTML: " + str(e))
 
     def _parse_text(self, html):
         """
