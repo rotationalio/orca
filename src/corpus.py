@@ -2,6 +2,7 @@ import os
 import shutil
 from gensim.corpora import Dictionary
 from gensim.corpora import MmCorpus
+from gensim.corpora import HashDictionary
 
 CORPUS_DIR = "corpus"
 DICT_NAME = "dict"
@@ -13,10 +14,11 @@ class OnlineTextCorpus():
     expected to be updated on an event-driven basis (e.g., when new data is received).
     The corpus is frequently checkpointed to disk to allow for data recovery.
     """
-    def __init__(self, dir, num_checkpoints=5):
+    def __init__(self, dir, hash_dictionary=False, num_checkpoints=5):
         if num_checkpoints < 1:
             raise ValueError("num_checkpoints must be at least 1.")
         self.dir = dir
+        self.hash_dictionary = hash_dictionary
         self.num_checkpoints = num_checkpoints
         self.dictionary = None
         self.mm = None
@@ -31,11 +33,17 @@ class OnlineTextCorpus():
     def _matrix_path(self):
         return os.path.join(self._corpus_path(), MATRIX_NAME)
 
+    def _dictionary(self):
+        if self.hash_dictionary:
+            return HashDictionary
+        else:
+            return Dictionary
+
     def _load_corpus(self):
         """
         Load the dictionary into memory and set the path to the streamed corpus.
         """
-        self.dictionary = Dictionary.load(self._dict_path())
+        self.dictionary = self._dictionary().load(self._dict_path())
         self.mm = MmCorpus(self._matrix_path())
 
     def get_dictionary(self):
@@ -65,7 +73,7 @@ class OnlineTextCorpus():
                 self.version = latest_version
                 self._load_corpus()
             else:
-                self.dictionary = Dictionary()
+                self.dictionary = self._dictionary()()
                 self.version = 0
 
     def iter_corpus(self, documents=[]):
