@@ -11,7 +11,7 @@ class ModelingEngine():
         """
         Fits a set of models on the provided corpus.
         """
-        raise NotImplementedError("fit() must be implemented by a subclass.")
+        return self
 
     def update(self, documents):
         """
