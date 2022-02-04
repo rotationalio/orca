@@ -41,7 +41,7 @@ class TestHTMLParser():
     @pytest.mark.parametrize(
         "html, expected",
         [
-            ([], [""]),
+            ([], []),
             (["<h1>Heading Text</h1>"], ["Heading Text"]),
             ([
                 "<h2>Heading</h2><p>Paragraph</p>",
@@ -49,6 +49,7 @@ class TestHTMLParser():
               ],
               ["Heading Paragraph", "Paragraph List"]),
             (["<h3>Heading</h3><a>Link</a><p>Paragraph</p>"], ["Heading Paragraph"]),
+            (["<h2>Heading Text<h2>", 42], ["Heading Text", None]),
         ]
     )
     def test_parse(self, html, expected):
