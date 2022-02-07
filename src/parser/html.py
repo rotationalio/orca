@@ -16,13 +16,14 @@ class HTMLParser():
         """
         Return a generator that parses text content from the reader.
         """
-        try: 
+        try:
             for html in self.reader.read():
-                if html is None:
-                    return
-                yield self._parse_text(html)
+                try:
+                    yield self._parse_text(html)
+                except Exception as e:
+                    yield None
         except Exception as e:
-            raise ValueError("Error retrieving file from reader: " + str(e))
+            raise ValueError("Error reading from reader: " + str(e))
 
     def _parse_text(self, html):
         """
@@ -33,5 +34,5 @@ class HTMLParser():
         soup = BeautifulSoup(html, 'html.parser')
         text = ""
         for tag in soup.find_all(TAGS):
-            text += tag.text + " "
+            text += tag.text.strip() + " "
         return text.strip()
